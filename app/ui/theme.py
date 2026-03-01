@@ -12,14 +12,6 @@ def apply_theme() -> None:
             --imw-border: color-mix(in srgb, var(--text-color) 16%, transparent);
             --imw-muted: color-mix(in srgb, var(--text-color) 60%, transparent);
             --imw-accent: var(--primary-color);
-            --imw-accent-bg: color-mix(in srgb, var(--primary-color) 20%, var(--background-color));
-            --imw-accent-hover: color-mix(in srgb, var(--primary-color) 82%, black);
-            --imw-card-hover: color-mix(
-                in srgb,
-                var(--secondary-background-color) 80%,
-                var(--primary-color)
-            );
-            --imw-focus-ring: color-mix(in srgb, var(--primary-color) 36%, transparent);
             --imw-hover-tint: color-mix(in srgb, var(--primary-color) 18%, transparent);
         }
 
@@ -95,10 +87,6 @@ def apply_theme() -> None:
             border-right: 1px solid var(--imw-border);
         }
 
-        section[data-testid="stSidebar"] * {
-            color: var(--imw-fg);
-        }
-
         section[data-testid="stSidebar"] .nav,
         section[data-testid="stSidebar"] .nav-pills,
         section[data-testid="stSidebar"] ul {
@@ -115,24 +103,12 @@ def apply_theme() -> None:
         section[data-testid="stSidebar"] .nav-link:focus-visible {
             background: var(--imw-hover-tint) !important;
             border-color: var(--imw-border) !important;
-            color: var(--imw-fg) !important;
-        }
-
-        section[data-testid="stSidebar"] .nav-link:hover *,
-        section[data-testid="stSidebar"] .nav-link:focus-visible * {
-            color: var(--imw-fg) !important;
         }
 
         section[data-testid="stSidebar"] .nav-link.active,
         section[data-testid="stSidebar"] .nav-link-selected {
             background: var(--imw-accent) !important;
-            color: #ffffff !important;
             border-color: var(--imw-accent) !important;
-        }
-
-        section[data-testid="stSidebar"] .nav-link.active *,
-        section[data-testid="stSidebar"] .nav-link-selected * {
-            color: #ffffff !important;
         }
 
         .stSelectbox > div > div,
@@ -152,54 +128,14 @@ def apply_theme() -> None:
             background: var(--imw-card) !important;
             border: 1px dashed var(--imw-border) !important;
             color: var(--imw-fg) !important;
-            transition: border-color 0.15s ease, background 0.15s ease;
         }
 
         div[data-testid="stFileUploaderDropzone"]:hover {
             border-color: var(--imw-accent) !important;
-            background: var(--imw-card-hover) !important;
         }
 
         div[data-testid="stFileUploaderDropzone"] * {
             color: var(--imw-muted) !important;
-        }
-
-        .stButton > button,
-        .stDownloadButton > button,
-        .stFileUploader button {
-            border-radius: 10px;
-            border: 1px solid var(--imw-border) !important;
-            background: var(--imw-card) !important;
-            color: var(--imw-fg) !important;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-        }
-
-        .stButton > button:hover,
-        .stDownloadButton > button:hover,
-        .stFileUploader button:hover {
-            background: var(--imw-card-hover) !important;
-            border-color: var(--imw-accent) !important;
-            color: var(--imw-fg) !important;
-        }
-
-        .stButton > button:focus-visible,
-        .stDownloadButton > button:focus-visible,
-        .stFileUploader button:focus-visible,
-        section[data-testid="stSidebar"] .nav-link:focus-visible {
-            outline: none !important;
-            box-shadow: 0 0 0 3px var(--imw-focus-ring) !important;
-        }
-
-        .stButton > button[kind="primary"] {
-            background: var(--imw-accent) !important;
-            border-color: var(--imw-accent) !important;
-            color: #ffffff !important;
-        }
-
-        .stButton > button[kind="primary"]:hover {
-            background: var(--imw-accent-hover) !important;
-            border-color: var(--imw-accent-hover) !important;
-            color: #ffffff !important;
         }
 
         .stTabs [data-baseweb="tab"] {
@@ -210,14 +146,8 @@ def apply_theme() -> None:
         }
 
         .stTabs [data-baseweb="tab"]:hover {
-            background: var(--imw-card-hover);
-            color: var(--imw-fg);
-        }
-
-        .stTabs [aria-selected="true"] {
-            background: var(--imw-accent-bg);
-            color: var(--imw-accent);
             border-color: var(--imw-accent);
+            color: var(--imw-fg);
         }
 
         .stAlert {
@@ -225,12 +155,7 @@ def apply_theme() -> None:
             border: 1px solid var(--imw-border);
             background: color-mix(in srgb, var(--imw-card) 92%, var(--imw-bg));
         }
-
-        p, span, label, h1, h2, h3, h4, h5, h6, li, div {
-            color: inherit;
-        }
         </style>
         """,
         unsafe_allow_html=True,
     )
-
