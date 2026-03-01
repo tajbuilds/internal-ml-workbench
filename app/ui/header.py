@@ -5,7 +5,12 @@ from app.core.ml import detect_task_type
 from app.core.workbench import dataset_kpis
 
 
-def render_header(df: pd.DataFrame | None, target_col: str | None, task_type: str | None) -> None:
+def render_header(
+    df: pd.DataFrame | None,
+    target_col: str | None,
+    task_type: str | None,
+    active_dataset_name: str | None,
+) -> None:
     loaded = df is not None
     rows_cols = "0 x 0"
     if df is not None:
@@ -13,22 +18,24 @@ def render_header(df: pd.DataFrame | None, target_col: str | None, task_type: st
 
     selected_target = target_col if target_col else "-"
     selected_task = task_type if task_type else "-"
+    dataset_name = active_dataset_name if active_dataset_name else "-"
 
     st.markdown(
         """
         <div class="imw-header">
             <h2>AutoML Dashboard</h2>
-            <p>Upload -> EDA -> Modelling -> Validation -> Export</p>
+            <p>Workspace -> Datasets -> EDA -> Modelling -> Validation -> Export</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Dataset Loaded", "Yes" if loaded else "No")
-    c2.metric("Rows x Cols", rows_cols)
-    c3.metric("Selected Target", selected_target)
-    c4.metric("Task", selected_task)
+    c2.metric("Active Dataset", dataset_name)
+    c3.metric("Rows x Cols", rows_cols)
+    c4.metric("Selected Target", selected_target)
+    c5.metric("Task", selected_task)
 
 
 

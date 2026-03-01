@@ -15,6 +15,12 @@ def apply_theme() -> None:
             --imw-hover-tint: color-mix(in srgb, var(--primary-color) 18%, transparent);
         }
 
+        section[data-testid="stSidebar"],
+        button[kind="header"][aria-label*="sidebar"],
+        div[data-testid="collapsedControl"] {
+            display: none !important;
+        }
+
         .stApp,
         div[data-testid="stAppViewContainer"],
         div[data-testid="stMain"],
@@ -79,36 +85,6 @@ def apply_theme() -> None:
         div[data-testid="stMetricValue"] {
             color: var(--imw-fg) !important;
             font-weight: 700;
-        }
-
-        section[data-testid="stSidebar"] {
-            background: var(--imw-bg) !important;
-            color: var(--imw-fg) !important;
-            border-right: 1px solid var(--imw-border);
-        }
-
-        section[data-testid="stSidebar"] .nav,
-        section[data-testid="stSidebar"] .nav-pills,
-        section[data-testid="stSidebar"] ul {
-            background: transparent !important;
-        }
-
-        section[data-testid="stSidebar"] .nav-link {
-            background: transparent !important;
-            border: 1px solid transparent !important;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-        }
-
-        section[data-testid="stSidebar"] .nav-link:hover,
-        section[data-testid="stSidebar"] .nav-link:focus-visible {
-            background: var(--imw-hover-tint) !important;
-            border-color: var(--imw-border) !important;
-        }
-
-        section[data-testid="stSidebar"] .nav-link.active,
-        section[data-testid="stSidebar"] .nav-link-selected {
-            background: var(--imw-accent) !important;
-            border-color: var(--imw-accent) !important;
         }
 
         .stSelectbox > div > div,
