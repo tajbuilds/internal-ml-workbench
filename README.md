@@ -1,6 +1,6 @@
 # AutoML Workbench
 
-Self-hosted Streamlit workbench for tabular ML workflows (CSV upload, automated EDA, model training, and evaluation).
+Self-hosted Streamlit workbench for tabular ML workflows (CSV upload, EDA, model training, and evaluation).
 
 ## Features
 - CSV upload with persistent storage under `/data`
@@ -39,7 +39,7 @@ Configured via `.env`:
 - Uploaded dataset file: `/data/sourcedata.csv`
 
 ## Security Notes
-- This is intended as an internal/self-hosted tool.
+- Intended for internal/self-hosted use.
 - Do not expose directly to the internet without reverse proxy auth/TLS.
 - Keep `.env` and any secrets out of git.
 
@@ -52,14 +52,16 @@ Configured via `.env`:
 - `tests/`: smoke/unit coverage
 
 ## Roadmap
-- Add user authentication option for shared deployments
-- Add model metadata/versioning for exported artifacts
-- Add optional experiment tracking
+- 2026-Q2: Add authentication and basic role-based access (admin/user) for shared internal deployments.
+- 2026-Q2: Add model artifact metadata (`model_card.json`) with schema, metrics, train timestamp, and app version.
+- 2026-Q3: Add optional experiment tracking (MLflow) with run history and model comparison in UI.
 
 ## Credits
-- This project was inspired by the original Auto ML Streamlit work by Elvis Darko.
-- It has been modernized and extended for internal self-hosted operation, including dependency upgrades, Docker hardening, GHCR publishing, production compose layout, and CI checks.
-- Any remaining issues are mine.
+- Based on the original Auto ML Streamlit work by Elvis Darko.
+- I modernized it for self-hosted use: updated dependencies, modularized app code, added tests/CI, containerized runtime, GHCR publishing, and production compose.
+- Remaining bugs and operational issues are my responsibility.
 
 ## License
 MIT. See `LICENSE`.
+
+

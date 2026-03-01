@@ -1,7 +1,7 @@
 services:
   automl-workbench:
-    container_name: automl_workbench
     image: ghcr.io/tajbuilds/internal-ml-workbench:${IMW_VERSION:-latest}
+    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -9,9 +9,8 @@ services:
     ports:
       - "${APP_PORT:-8501}:8501"
     volumes:
-      - ${WORKBENCH_DATA_LOCATION}:/data
+      - "${WORKBENCH_DATA_LOCATION:-./data}:/data"
       - /etc/localtime:/etc/localtime:ro
-    restart: unless-stopped
     healthcheck:
       test:
         - CMD
@@ -22,5 +21,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
 
 networks: {}
