@@ -36,7 +36,7 @@ docker compose up -d --build
 
 ## Compose model
 - Compose builds local image `internal-ml-workbench:latest` by default.
-- Data persistence is through volume `workbench-data` mounted to `/data`.
+- Data persistence is through `${WORKBENCH_DATA_LOCATION}:/data` bind mount from `.env`.
 - Uploaded app data is stored as `/data/sourcedata.csv` in container.
 
 ## Runtime target

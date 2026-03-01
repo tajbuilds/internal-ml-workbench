@@ -1,10 +1,7 @@
 services:
   automl-workbench:
     container_name: automl_workbench
-    image: ${IMAGE_NAME:-internal-ml-workbench:latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/tajbuilds/internal-ml-workbench:${IMW_VERSION:-latest}
     env_file:
       - .env
     environment:
@@ -12,7 +9,8 @@ services:
     ports:
       - "${APP_PORT:-8501}:8501"
     volumes:
-      - workbench-data:/data
+      - ${WORKBENCH_DATA_LOCATION}:/data
+      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     healthcheck:
       test:
@@ -24,8 +22,5 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-
-volumes:
-  workbench-data: {}
 
 networks: {}
