@@ -38,6 +38,10 @@ Configured via `.env`:
 - Persisted host path: `${WORKBENCH_DATA_LOCATION}`
 - Uploaded dataset file: `/data/sourcedata.csv`
 
+## Data Handling
+- Uploaded datasets are stored on disk at `/data/sourcedata.csv` (mapped to `${WORKBENCH_DATA_LOCATION}` on the host).
+- Model artifacts are generated in-memory for download and are not persisted unless you save them externally.
+- Do not upload sensitive production data unless your host storage, backups, and access controls meet your organization security requirements.
 ## Security Notes
 - Intended for internal/self-hosted use.
 - Do not expose directly to the internet without reverse proxy auth/TLS.
@@ -63,5 +67,6 @@ Configured via `.env`:
 
 ## License
 MIT. See `LICENSE`.
+
 
 
