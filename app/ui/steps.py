@@ -35,7 +35,7 @@ def render_upload_step() -> None:
     col_a, col_b = st.columns([1, 1])
     if col_a.button("Save Uploaded Dataset", type="primary", disabled=uploaded is None):
         try:
-            with st.spinner("Saving dataset to /data..."):
+            with st.spinner("Saving dataset to /data...", show_time=True):
                 df = save_uploaded_dataframe(uploaded)
             st.session_state.df = df
             st.session_state.target_col = None
@@ -87,15 +87,18 @@ def render_eda_step() -> None:
     st.subheader("2) EDA")
     st.caption("Generate an HTML profile report and save it under /data/reports.")
 
-    df, target_col, ready = _require_dataset_and_target()
+    df, _target_col, ready = _require_dataset_and_target()
     if not ready:
         st.warning("Upload a dataset and select a target in step 1 before running EDA.")
 
     run_eda = st.button("Generate EDA Report", type="primary", disabled=not ready)
     if run_eda and df is not None:
         try:
-            with st.spinner("Building profile report..."):
+            with st.status("Generating EDA report...", expanded=True) as status:
+                status.write("Profiling dataframe structure and distributions")
                 report_path = generate_eda_report(df)
+                status.write(f"Saved report to: {report_path}")
+                status.update(label="EDA report complete", state="complete")
             st.session_state.eda_report_path = str(report_path)
             st.success(f"EDA report saved: {report_path}")
         except Exception as exc:
@@ -130,9 +133,13 @@ def render_modelling_step() -> None:
         try:
             task_type = st.session_state.task_type or detect_task_type(df, target_col)
             st.session_state.task_type = task_type
-            with st.spinner("Training and cross-validating models..."):
+            with st.status("Training models...", expanded=True) as status:
+                status.write(f"Task type: {task_type}")
+                status.write("Running cross-validation and model comparison")
                 artifacts = run_training(df, target_col, task_type)
+                status.write("Persisting artifacts to /data/artifacts")
                 artifact_paths = persist_training_artifacts(artifacts)
+                status.update(label="Training complete", state="complete")
             st.session_state.artifacts = artifacts
             st.session_state.artifact_paths = {k: str(v) for k, v in artifact_paths.items()}
             st.success(f"Training complete ({task_type}).")
