@@ -42,6 +42,7 @@ Configured via `.env`:
 - Uploaded datasets are stored on disk at `/data/sourcedata.csv` (mapped to `${WORKBENCH_DATA_LOCATION}` on the host).
 - Model artifacts are generated in-memory for download and are not persisted unless you save them externally.
 - Do not upload sensitive production data unless your host storage, backups, and access controls meet your organization security requirements.
+
 ## Security Notes
 - Intended for internal/self-hosted use.
 - Do not expose directly to the internet without reverse proxy auth/TLS.
@@ -61,12 +62,10 @@ Configured via `.env`:
 - 2026-Q3: Add optional experiment tracking (MLflow) with run history and model comparison in UI.
 
 ## Credits
-- Based on the original Auto ML Streamlit work by Elvis Darko.
-- I modernized it for self-hosted use: updated dependencies, modularized app code, added tests/CI, containerized runtime, GHCR publishing, and production compose.
-- Remaining bugs and operational issues are my responsibility.
+- Based on the original Auto ML Streamlit work by Elvis Darko:
+  https://github.com/elvis-darko/AUTO-MACHINE-LEARNING-WEB-APP-USING-STREAMLIT-AND-PYCARET
+- A detailed upstream-to-current change log is documented in [UPSTREAM_CHANGES.md](UPSTREAM_CHANGES.md).
+- Remaining bugs and operational issues in this repository are my responsibility.
 
 ## License
 MIT. See `LICENSE`.
-
-
-

@@ -1,36 +1,43 @@
 import streamlit as st
 
 from app.core.state import init_state
-from app.pages.main_pages import (
-    auto_ml_page,
-    data_profiling_page,
-    data_upload_page,
-    developer_page,
-    evaluation_page,
-    home_page,
-    model_download_page,
-    render_sidebar,
+from app.ui.header import render_header
+from app.ui.sidebar import render_sidebar
+from app.ui.steps import (
+    render_eda_step,
+    render_export_step,
+    render_modelling_step,
+    render_upload_step,
+    render_validation_step,
 )
+from app.ui.theme import apply_theme
+
+STEP_RENDERERS = {
+    "Upload": render_upload_step,
+    "EDA": render_eda_step,
+    "Modelling": render_modelling_step,
+    "Validation": render_validation_step,
+    "Export": render_export_step,
+}
 
 
 def main() -> None:
     st.set_page_config(page_title="AutoML Workbench", layout="wide")
-    st.title("AutoML Workbench")
 
     init_state()
-    selected = render_sidebar()
+    apply_theme()
 
-    if selected == "Home":
-        home_page()
-    elif selected == "Upload Data":
-        data_upload_page()
-    elif selected == "Data Profiling":
-        data_profiling_page()
-    elif selected == "Auto ML":
-        auto_ml_page()
-    elif selected == "Evaluation":
-        evaluation_page()
-    elif selected == "Model Download":
-        model_download_page()
-    else:
-        developer_page()
+    selected_step = render_sidebar()
+
+    render_header(
+        st.session_state.df,
+        st.session_state.target_col,
+        st.session_state.task_type,
+    )
+
+    renderer = STEP_RENDERERS.get(selected_step, render_upload_step)
+    renderer()
+
+
+if __name__ == "__main__":
+    main()
