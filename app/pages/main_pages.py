@@ -5,9 +5,9 @@ from sklearn.metrics import confusion_matrix
 from streamlit_option_menu import option_menu
 from ydata_profiling import ProfileReport
 
-from workbench.constants import APP_IMAGE_URL, DATA_FILE, DEVELOPER_IMAGE_URL
-from workbench.ml import detect_task_type, train_and_compare
-from workbench.state import get_df, reset_training_outputs
+from app.core.config import APP_IMAGE_URL, DATA_FILE, DEVELOPER_IMAGE_URL
+from app.core.ml import detect_task_type, train_and_compare
+from app.core.state import get_df, reset_training_outputs
 
 
 @st.cache_data(show_spinner=False)

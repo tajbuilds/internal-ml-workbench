@@ -1,6 +1,7 @@
 import streamlit as st
 
-from workbench.pages import (
+from app.core.state import init_state
+from app.pages.main_pages import (
     auto_ml_page,
     data_profiling_page,
     data_upload_page,
@@ -10,7 +11,6 @@ from workbench.pages import (
     model_download_page,
     render_sidebar,
 )
-from workbench.state import init_state
 
 
 def main() -> None:

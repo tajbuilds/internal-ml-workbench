@@ -1,10 +1,12 @@
 import pandas as pd
 import streamlit as st
 
-from workbench.constants import DATA_FILE
+from app.core.config import APP_DATA_DIR, DATA_FILE
 
 
 def init_state() -> None:
+    APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
     if "df" not in st.session_state:
         st.session_state.df = None
     if "artifacts" not in st.session_state:

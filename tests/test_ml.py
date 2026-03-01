@@ -1,6 +1,6 @@
 import pandas as pd
 
-from workbench.ml import detect_task_type, train_and_compare
+from app.core.ml import detect_task_type, train_and_compare
 
 
 def test_detect_task_type_classification(sample_classification_df: pd.DataFrame) -> None:

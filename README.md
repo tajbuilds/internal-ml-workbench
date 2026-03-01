@@ -1,70 +1,65 @@
-# AutoML Workbench (Streamlit + scikit-learn)
+# AutoML Workbench
 
-A modular local-first Streamlit app that:
-- uploads a CSV dataset,
-- generates automated profiling (ydata-profiling),
-- compares multiple scikit-learn models with cross-validation,
-- provides a holdout evaluation report,
-- downloads the best fitted pipeline.
+Self-hosted Streamlit workbench for tabular ML workflows (CSV upload, automated EDA, model training, and evaluation).
+
+## Features
+- CSV upload with persistent storage under `/data`
+- Automated EDA with `ydata-profiling`
+- Classification and regression model comparison (scikit-learn)
+- Holdout evaluation report (metrics + confusion matrix/scatter)
+- Download trained model pipeline as `.pkl`
+- GHCR image publishing workflow and production compose deployment
 
 ## Quick Start (Docker Compose)
-
-### 1) Clone
+1. Clone and enter repo.
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/tajbuilds/internal-ml-workbench.git
 cd internal-ml-workbench
 ```
-
-### 2) Create env file
+2. Create env file.
 ```bash
 cp .env.example .env
 ```
-
-### 3) Run
+3. Start service.
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-Open: `http://localhost:8501` (or your `APP_PORT` in `.env`).
+Open: `http://localhost:${APP_PORT}` (default `8501`).
 
-## Update flow
-When the repo updates:
-```bash
-git pull
-docker compose up -d --build
-```
+## Configuration
+Configured via `.env`:
+- `IMW_VERSION` image tag (for example `latest` or `v1.0.0`)
+- `APP_PORT` host port
+- `WORKBENCH_DATA_LOCATION` host path mounted to container `/data`
 
-## Compose model
-- Compose builds local image `internal-ml-workbench:latest` by default.
-- Data persistence is through `${WORKBENCH_DATA_LOCATION}:/data` bind mount from `.env`.
-- Uploaded app data is stored as `/data/sourcedata.csv` in container.
+## Data and Artifacts
+- Container path: `/data`
+- Persisted host path: `${WORKBENCH_DATA_LOCATION}`
+- Uploaded dataset file: `/data/sourcedata.csv`
 
-## Runtime target
-- Python 3.11
+## Security Notes
+- This is intended as an internal/self-hosted tool.
+- Do not expose directly to the internet without reverse proxy auth/TLS.
+- Keep `.env` and any secrets out of git.
 
-## Project layout
-- `streamlit_app.py`: thin launcher
-- `workbench/app.py`: routing + page selection
-- `workbench/pages.py`: Streamlit pages
-- `workbench/ml.py`: training, CV ranking, evaluation, model packaging
-- `workbench/state.py`: Streamlit session state helpers
-- `tests/`: unit tests for ML flow
-- `data/samples/`: sample regression/classification datasets
-- `.github/workflows/ci.yml`: lint + tests + smoke CI
+## Architecture
+- `app/main.py`: Streamlit entrypoint/routing
+- `app/pages/main_pages.py`: UI pages
+- `app/core/ml.py`: model training and evaluation engine
+- `app/core/state.py`: Streamlit session/data state
+- `app/core/config.py`: environment-driven configuration
+- `tests/`: smoke/unit coverage
 
-## Local Python setup (optional, non-Docker)
-```bat
-call C:\Users\Taj\anaconda3\Scripts\activate.bat C:\Users\Taj\anaconda3
-conda create -y -n imw311 python=3.11
-conda activate imw311
-cd /d C:\dev\internal-ml-workbench
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-streamlit run streamlit_app.py
-```
+## Roadmap
+- Add user authentication option for shared deployments
+- Add model metadata/versioning for exported artifacts
+- Add optional experiment tracking
 
-## Quality checks
-```bash
-ruff check .
-pytest
-```
+## Credits
+- This project was inspired by the original Auto ML Streamlit work by Elvis Darko.
+- It has been modernized and extended for internal self-hosted operation, including dependency upgrades, Docker hardening, GHCR publishing, production compose layout, and CI checks.
+- Any remaining issues are mine.
+
+## License
+MIT. See `LICENSE`.

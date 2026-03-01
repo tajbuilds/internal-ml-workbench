@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 
-DATA_FILE = Path(os.getenv("WORKBENCH_DATA_FILE", "sourcedata.csv"))
+APP_DATA_DIR = Path(os.getenv("APP_DATA_DIR", "."))
+DATA_FILE = APP_DATA_DIR / "sourcedata.csv"
+
 APP_IMAGE_URL = (
     "https://github.com/elvis-darko/AUTO-MACHINE-LEARNING-WEB-APP-USING-"
     "STREAMLIT-AND-PYCARET/raw/main/images/AUTOML.jpg"
