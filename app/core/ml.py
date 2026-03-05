@@ -3,8 +3,9 @@ import pickle
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 import pandas as pd
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
 from sklearn.ensemble import (
     GradientBoostingClassifier,
     GradientBoostingRegressor,
@@ -12,7 +13,7 @@ from sklearn.ensemble import (
     RandomForestRegressor,
 )
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge
+from sklearn.linear_model import Lasso, LinearRegression, LogisticRegression, Ridge
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -32,7 +33,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 class TrainingArtifacts:
     task_type: str
     best_model_name: str
-    best_model: Pipeline
+    best_model: Any
     leaderboard_df: pd.DataFrame
     setup_df: pd.DataFrame
     evaluation_df: pd.DataFrame
@@ -87,6 +88,7 @@ def regression_models() -> dict[str, object]:
     return {
         "Linear Regression": LinearRegression(),
         "Ridge": Ridge(alpha=1.0),
+        "Lasso": Lasso(alpha=0.001, max_iter=5000),
         "Random Forest": RandomForestRegressor(n_estimators=300, random_state=42),
         "Gradient Boosting": GradientBoostingRegressor(random_state=42),
     }
@@ -166,14 +168,39 @@ def build_evaluation(
     return eval_df, payload
 
 
-def train_and_compare(df: pd.DataFrame, target: str, task_type: str) -> TrainingArtifacts:
+def _wrap_regressor(estimator: object, target_transform: str) -> object:
+    if target_transform == "log1p":
+        return TransformedTargetRegressor(
+            regressor=estimator,
+            func=np.log1p,
+            inverse_func=np.expm1,
+            check_inverse=False,
+        )
+    return estimator
+
+
+def train_and_compare(
+    df: pd.DataFrame,
+    target: str,
+    task_type: str,
+    *,
+    feature_columns: list[str] | None = None,
+    target_transform: str = "none",
+) -> TrainingArtifacts:
     train_df = df.dropna(subset=[target]).copy()
     if train_df.empty:
         raise ValueError("Target column contains only missing values.")
 
-    x = train_df.drop(columns=[target])
+    x = train_df[feature_columns].copy() if feature_columns else train_df.drop(columns=[target])
     y = train_df[target]
     preprocessor = build_preprocessor(x)
+
+    if task_type == "classification":
+        target_transform = "none"
+    elif target_transform == "log1p" and bool((pd.to_numeric(y, errors="coerce") < 0).any()):
+        raise ValueError(
+            "log1p target transform requires target values greater than or equal to 0."
+        )
 
     if task_type == "classification" and y.nunique(dropna=True) < 2:
         raise ValueError("Classification requires at least 2 target classes.")
@@ -194,7 +221,7 @@ def train_and_compare(df: pd.DataFrame, target: str, task_type: str) -> Training
     leaderboard_rows: list[dict[str, Any]] = []
     best_model_name = ""
     best_score = float("-inf")
-    best_pipeline: Pipeline | None = None
+    best_pipeline: Any | None = None
 
     for model_name, estimator in models.items():
         pipeline = Pipeline(
@@ -203,8 +230,13 @@ def train_and_compare(df: pd.DataFrame, target: str, task_type: str) -> Training
                 ("model", estimator),
             ]
         )
+        candidate_estimator = (
+            pipeline
+            if task_type == "classification"
+            else _wrap_regressor(pipeline, target_transform)
+        )
         scores = cross_validate(
-            pipeline,
+            candidate_estimator,
             x_train,
             y_train,
             cv=cv,
@@ -226,7 +258,7 @@ def train_and_compare(df: pd.DataFrame, target: str, task_type: str) -> Training
         if current_score > best_score:
             best_score = current_score
             best_model_name = model_name
-            best_pipeline = pipeline
+            best_pipeline = candidate_estimator
 
     if best_pipeline is None:
         raise RuntimeError("No model could be trained.")
@@ -243,11 +275,13 @@ def train_and_compare(df: pd.DataFrame, target: str, task_type: str) -> Training
             {
                 "task_type": task_type,
                 "rows_used": len(train_df),
-                "features": x.shape[1],
+                "feature_count": x.shape[1],
                 "train_rows": len(x_train),
                 "test_rows": len(x_test),
                 "cv_folds": cv,
                 "best_model": best_model_name,
+                "target_transform": target_transform,
+                "feature_columns": ", ".join(x.columns.tolist()),
             }
         ]
     )

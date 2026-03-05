@@ -5,8 +5,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     option_menu = None
 
-STEP_OPTIONS = ["Workspace", "Datasets", "EDA", "Modelling", "Validation", "Export"]
-STEP_ICONS = ["house", "database", "bar-chart", "cpu", "clipboard-check", "download"]
+STEP_OPTIONS = ["Workspace", "Datasets", "Preparation", "EDA", "Modelling", "Validation", "Export"]
+STEP_ICONS = ["house", "database", "sliders", "bar-chart", "cpu", "clipboard-check", "download"]
 
 
 def _menu_styles() -> dict:

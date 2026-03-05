@@ -24,7 +24,7 @@ def render_header(
         """
         <div class="imw-header">
             <h2>AutoML Dashboard</h2>
-            <p>Workspace -> Datasets -> EDA -> Modelling -> Validation -> Export</p>
+            <p>Workspace -> Datasets -> Preparation -> EDA -> Modelling -> Validation -> Export</p>
         </div>
         """,
         unsafe_allow_html=True,

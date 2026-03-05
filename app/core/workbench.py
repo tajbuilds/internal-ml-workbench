@@ -193,8 +193,21 @@ def generate_eda_report(
     return report_file
 
 
-def run_training(df: pd.DataFrame, target: str, task_type: str) -> TrainingArtifacts:
-    return train_and_compare(df, target, task_type)
+def run_training(
+    df: pd.DataFrame,
+    target: str,
+    task_type: str,
+    *,
+    feature_columns: list[str] | None = None,
+    target_transform: str = "none",
+) -> TrainingArtifacts:
+    return train_and_compare(
+        df,
+        target,
+        task_type,
+        feature_columns=feature_columns,
+        target_transform=target_transform,
+    )
 
 
 def persist_training_artifacts(

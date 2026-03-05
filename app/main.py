@@ -7,6 +7,7 @@ from app.ui.steps import (
     render_eda_step,
     render_export_step,
     render_modelling_step,
+    render_preparation_step,
     render_validation_step,
     render_workspace_step,
 )
@@ -16,6 +17,7 @@ from app.ui.top_nav import render_top_nav, render_workspace_context
 STEP_RENDERERS = {
     "Workspace": render_workspace_step,
     "Datasets": render_datasets_step,
+    "Preparation": render_preparation_step,
     "EDA": render_eda_step,
     "Modelling": render_modelling_step,
     "Validation": render_validation_step,

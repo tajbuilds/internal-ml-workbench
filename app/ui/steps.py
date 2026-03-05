@@ -9,14 +9,21 @@ import streamlit as st
 from pandas.plotting import scatter_matrix
 from sklearn.metrics import confusion_matrix
 
-from app.core.eda_report import generate_selected_eda_report
 from app.core.config import APP_DATA_DIR
+from app.core.eda_report import generate_selected_eda_report
 from app.core.ml import detect_task_type
+from app.core.planning import (
+    feature_presets,
+    preparation_recommendations,
+    recommended_target_transform,
+)
+from app.core.prep import apply_preparation, audit_dataset
 from app.core.state import (
     load_active_dataset,
     persist_active_settings,
     refresh_datasets,
     reset_downstream,
+    reset_preparation,
 )
 from app.core.workbench import (
     delete_dataset,
@@ -35,6 +42,10 @@ def _require_dataset_and_target() -> tuple[pd.DataFrame | None, str | None, str 
     dataset_id = st.session_state.active_dataset_id
     ready = df is not None and bool(target_col) and bool(dataset_id)
     return df, target_col, dataset_id, ready
+
+
+def _feature_options(df: pd.DataFrame, target_col: str) -> list[str]:
+    return [col for col in df.columns if col != target_col]
 
 
 def _sync_settings_to_active_dataset() -> None:
@@ -296,9 +307,11 @@ def render_workspace_step() -> None:
                 df, dataset_id = save_uploaded_dataset(uploaded, upload_name or None)
             refresh_datasets()
             st.session_state.active_dataset_id = dataset_id
-            st.session_state.df = df
+            st.session_state.raw_df = df
+            st.session_state.df = df.copy()
             st.session_state.target_col = None
             st.session_state.task_type = None
+            reset_preparation()
             reset_downstream()
             st.success("Dataset saved and set as active.")
         except Exception as exc:
@@ -308,6 +321,7 @@ def render_workspace_step() -> None:
     if col_b.button("Reload Active Dataset", type="secondary", disabled=reload_disabled):
         try:
             load_active_dataset()
+            reset_preparation()
             reset_downstream()
             st.success("Active dataset reloaded.")
         except Exception as exc:
@@ -376,6 +390,7 @@ def render_datasets_step() -> None:
     if c1.button("Set As Active", type="primary"):
         st.session_state.active_dataset_id = selected_id
         load_active_dataset()
+        reset_preparation()
         reset_downstream()
         st.success("Active dataset changed.")
 
@@ -387,14 +402,129 @@ def render_datasets_step() -> None:
             refresh_datasets()
             if st.session_state.active_dataset_id == selected_id:
                 st.session_state.active_dataset_id = None
+                st.session_state.raw_df = None
                 st.session_state.df = None
                 st.session_state.target_col = None
                 st.session_state.task_type = None
+                st.session_state.prep_report = None
                 reset_downstream()
                 if st.session_state.datasets:
                     st.session_state.active_dataset_id = st.session_state.datasets[0]["id"]
                     load_active_dataset()
             st.success("Dataset deleted.")
+
+
+def render_preparation_step() -> None:
+    st.subheader("Preparation")
+    st.caption("Audit and sanitize the active dataset before EDA or modeling.")
+
+    raw_df = st.session_state.get("raw_df")
+    working_df = st.session_state.get("df")
+    target_col = st.session_state.get("target_col")
+
+    if raw_df is None or working_df is None:
+        st.info("Load a dataset in Workspace first.")
+        return
+
+    audit = audit_dataset(raw_df)
+    recommendations = preparation_recommendations(audit)
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Raw Rows", f"{len(raw_df):,}")
+    c2.metric("Raw Columns", f"{len(raw_df.columns):,}")
+    c3.metric("Missing Cells", f"{int(raw_df.isna().sum().sum()):,}")
+    c4.metric("Duplicate Rows", f"{int(raw_df.duplicated().sum()):,}")
+
+    st.markdown("### Recommended Actions")
+    for note in recommendations:
+        st.info(note)
+
+    if not audit["missing"].empty:
+        st.markdown("### Missingness Audit")
+        st.dataframe(audit["missing"], use_container_width=True)
+
+    if not audit["coercion_candidates"].empty:
+        st.markdown("### Type Conversion Candidates")
+        st.dataframe(audit["coercion_candidates"], use_container_width=True)
+
+    if not audit["outliers"].empty:
+        st.markdown("### Outlier Audit")
+        st.dataframe(audit["outliers"].head(20), use_container_width=True)
+
+    st.markdown("### Apply Data Sanitization")
+    col_a, col_b, col_c = st.columns(3)
+    drop_duplicates = col_a.checkbox("Drop duplicate rows", value=True)
+    coerce_numeric = col_b.checkbox("Coerce numeric-like text columns", value=True)
+    expand_dates = col_c.checkbox("Expand datetime-like text columns", value=True)
+
+    col_d, col_e = st.columns(2)
+    numeric_threshold = col_d.slider("Numeric parse threshold", 0.5, 1.0, 0.9, 0.05)
+    datetime_threshold = col_e.slider("Datetime parse threshold", 0.5, 1.0, 0.9, 0.05)
+
+    col_f, col_g, col_h = st.columns(3)
+    max_missing_pct = col_f.slider("Drop columns above missing %", 0, 95, 0, 5)
+    impute_numeric = col_g.checkbox("Impute numeric missing values", value=True)
+    impute_categorical = col_h.checkbox("Impute categorical missing values", value=True)
+
+    clip_outliers = st.checkbox("Clip numeric outliers with IQR caps", value=False)
+
+    c_apply, c_reset = st.columns(2)
+    if c_apply.button("Apply Preparation", type="primary"):
+        result = apply_preparation(
+            raw_df,
+            drop_duplicates=drop_duplicates,
+            coerce_numeric=coerce_numeric,
+            numeric_threshold=float(numeric_threshold),
+            expand_dates=expand_dates,
+            datetime_threshold=float(datetime_threshold),
+            max_missing_pct=float(max_missing_pct),
+            impute_numeric=impute_numeric,
+            impute_categorical=impute_categorical,
+            clip_outliers=clip_outliers,
+        )
+        st.session_state.df = result.df
+        st.session_state.prep_report = result.report
+        reset_downstream()
+        st.success("Preparation applied to working dataset.")
+
+    if c_reset.button("Reset To Raw Dataset", type="secondary"):
+        reset_preparation()
+        reset_downstream()
+        st.success("Working dataset reset to the original loaded dataset.")
+
+    report = st.session_state.get("prep_report")
+    if report:
+        st.markdown("### Preparation Summary")
+        def _report_value(key: str) -> str:
+            return ", ".join(report[key]) or "-"
+
+        summary_rows = [
+            {"change": "Rows", "value": f"{report['original_rows']} -> {report['final_rows']}"},
+            {"change": "Columns", "value": f"{report['original_cols']} -> {report['final_cols']}"},
+            {"change": "Duplicates removed", "value": report["duplicate_rows_removed"]},
+            {"change": "Numeric coercions", "value": _report_value("columns_coerced_numeric")},
+            {"change": "Date expansions", "value": _report_value("date_columns_expanded")},
+            {
+                "change": "Dropped high-missing columns",
+                "value": _report_value("columns_dropped_for_missing"),
+            },
+            {"change": "Numeric imputations", "value": _report_value("numeric_columns_imputed")},
+            {
+                "change": "Categorical imputations",
+                "value": _report_value("categorical_columns_imputed"),
+            },
+            {"change": "Outlier clipping", "value": _report_value("outlier_columns_clipped")},
+        ]
+        st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+
+    st.markdown("### Working Dataset Preview")
+    current_df = st.session_state.df
+    if target_col and target_col not in current_df.columns:
+        st.warning(
+            "Current target column is no longer present after preparation. "
+            "Re-select it in Workspace."
+        )
+    st.dataframe(current_df.head(200), use_container_width=True)
 
 
 def render_eda_step() -> None:
@@ -574,11 +704,52 @@ def render_eda_step() -> None:
 
 def render_modelling_step() -> None:
     st.subheader("Modelling")
-    st.caption("Run cross-validated model comparison and persist outputs per dataset.")
+    st.caption("Choose a feature strategy, compare models, and persist the best result.")
 
     df, target_col, dataset_id, ready = _require_dataset_and_target()
     if not ready:
         st.warning("Set an active dataset and target in Workspace before training.")
+
+    selected_features: list[str] = []
+    target_transform = "none"
+    if ready and df is not None and target_col is not None:
+        task_type = st.session_state.task_type or detect_task_type(df, target_col)
+        presets = feature_presets(df, target_col, task_type)
+        preset_names = list(presets.keys()) + ["Custom"]
+        selected_preset = st.radio(
+            "Feature strategy",
+            preset_names,
+            horizontal=True,
+            help="Start with a preset or choose Custom for manual selection.",
+        )
+
+        feature_options = _feature_options(df, target_col)
+        if selected_preset == "Custom":
+            selected_features = st.multiselect(
+                "Feature columns",
+                options=feature_options,
+                default=feature_options,
+                help="Choose which columns to include in model training.",
+            )
+        else:
+            selected_features = presets[selected_preset]
+            caption_value = ", ".join(selected_features) if selected_features else "-"
+            st.caption(f"{selected_preset}: {caption_value}")
+
+        if task_type == "regression":
+            recommended_transform = recommended_target_transform(df, target_col, task_type)
+            target_transform = st.radio(
+                "Target transform",
+                ["none", "log1p"],
+                index=0 if recommended_transform == "none" else 1,
+                horizontal=True,
+                help=(
+                    "log1p can help when the target is heavily right-skewed. "
+                    f"Recommended: {recommended_transform}"
+                ),
+            )
+        else:
+            st.caption("Target transform is only available for regression tasks.")
 
     train_clicked = st.button("Train and Compare", type="primary", disabled=not ready)
     if train_clicked and df is not None and target_col is not None and dataset_id is not None:
@@ -586,10 +757,20 @@ def render_modelling_step() -> None:
             task_type = st.session_state.task_type or detect_task_type(df, target_col)
             st.session_state.task_type = task_type
             _sync_settings_to_active_dataset()
+            if not selected_features:
+                raise ValueError("Select at least one feature column before training.")
             with st.status("Training models...", expanded=True) as status:
                 status.write(f"Task type: {task_type}")
+                status.write(f"Features selected: {len(selected_features)}")
+                status.write(f"Target transform: {target_transform}")
                 status.write("Running cross-validation and model comparison")
-                artifacts = run_training(df, target_col, task_type)
+                artifacts = run_training(
+                    df,
+                    target_col,
+                    task_type,
+                    feature_columns=selected_features,
+                    target_transform=target_transform,
+                )
                 status.write(f"Persisting artifacts to {APP_DATA_DIR / 'artifacts' / dataset_id}")
                 artifact_paths = persist_training_artifacts(artifacts, dataset_id)
                 status.update(label="Training complete", state="complete")
@@ -664,6 +845,9 @@ def render_validation_step() -> None:
     else:
         y_true = payload["y_true"]
         y_pred = payload["y_pred"]
+        residuals = np.array(y_true) - np.array(y_pred)
+
+        c1, c2 = st.columns(2)
 
         fig, ax = plt.subplots(figsize=(7, 5))
         ax.scatter(y_true, y_pred, alpha=0.7)
@@ -673,8 +857,37 @@ def render_validation_step() -> None:
         ax.set_title("Predicted vs Actual")
         ax.set_xlabel("Actual")
         ax.set_ylabel("Predicted")
-        st.pyplot(fig)
+        with c1:
+            st.pyplot(fig)
         plt.close(fig)
+
+        fig, ax = plt.subplots(figsize=(7, 5))
+        ax.hist(residuals, bins=30)
+        ax.set_title("Residual Distribution")
+        ax.set_xlabel("Actual - Predicted")
+        ax.set_ylabel("Count")
+        with c2:
+            st.pyplot(fig)
+        plt.close(fig)
+
+        band_df = pd.DataFrame({"actual": y_true, "pred": y_pred})
+        try:
+            band_df["price_band"] = pd.qcut(band_df["actual"], q=4, duplicates="drop")
+            band_summary = (
+                band_df.assign(abs_error=lambda x: (x["actual"] - x["pred"]).abs())
+                .groupby("price_band", observed=False)
+                .agg(
+                    rows=("actual", "size"),
+                    mean_actual=("actual", "mean"),
+                    mean_predicted=("pred", "mean"),
+                    mean_abs_error=("abs_error", "mean"),
+                )
+                .reset_index()
+            )
+            st.markdown("### Error By Target Band")
+            st.dataframe(band_summary, use_container_width=True)
+        except ValueError:
+            pass
 
 
 def _download_file_button(label: str, path: Path, mime: str) -> None:
@@ -730,6 +943,3 @@ def render_export_step() -> None:
             ]
         )
     )
-
-
-
