@@ -28,7 +28,7 @@ docker compose up -d
 Open: `http://localhost:${APP_PORT}` (default `8501`).
 
 ## Configuration
-Configured via `.env`:
+Configured via `.env` for containerized runs:
 - `IMW_VERSION` image tag (for example `latest` or `v1.0.0`)
 - `APP_PORT` host port
 - `WORKBENCH_DATA_LOCATION` host path mounted to container `/data`
@@ -37,6 +37,7 @@ Configured via `.env`:
 - Container path: `/data`
 - Persisted host path: `${WORKBENCH_DATA_LOCATION}`
 - Uploaded dataset file: `/data/sourcedata.csv`
+- Local default path when `APP_DATA_DIR` is unset and `/data` is not writable: `./data/workbench`
 
 ## Data Handling
 - Uploaded datasets are stored on disk at `/data/sourcedata.csv` (mapped to `${WORKBENCH_DATA_LOCATION}` on the host).
@@ -50,7 +51,7 @@ Configured via `.env`:
 
 ## Architecture
 - `app/main.py`: Streamlit entrypoint/routing
-- `app/pages/main_pages.py`: UI pages
+- `app/ui/steps.py`: step-based UI flow
 - `app/core/ml.py`: model training and evaluation engine
 - `app/core/state.py`: Streamlit session/data state
 - `app/core/config.py`: environment-driven configuration

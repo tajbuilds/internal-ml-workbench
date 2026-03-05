@@ -1,9 +1,9 @@
-name: imw311
+name: imw313
 channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11
+  - python=3.13
   - pip
   - pip:
       - -r requirements.txt

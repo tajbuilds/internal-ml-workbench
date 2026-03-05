@@ -10,6 +10,7 @@ from pandas.plotting import scatter_matrix
 from sklearn.metrics import confusion_matrix
 
 from app.core.eda_report import generate_selected_eda_report
+from app.core.config import APP_DATA_DIR
 from app.core.ml import detect_task_type
 from app.core.state import (
     load_active_dataset,
@@ -291,7 +292,7 @@ def render_workspace_step() -> None:
     col_a, col_b = st.columns([1, 1])
     if col_a.button("Save Uploaded Dataset", type="primary", disabled=uploaded is None):
         try:
-            with st.spinner("Saving dataset to /data/datasets...", show_time=True):
+            with st.spinner(f"Saving dataset to {APP_DATA_DIR / 'datasets'}...", show_time=True):
                 df, dataset_id = save_uploaded_dataset(uploaded, upload_name or None)
             refresh_datasets()
             st.session_state.active_dataset_id = dataset_id
@@ -525,7 +526,7 @@ def render_eda_step() -> None:
 
     st.markdown("---")
     st.markdown("### Profile Report (Optional)")
-    st.caption("Generate full HTML profile report under /data/reports/<dataset_id>.")
+    st.caption(f"Generate full HTML profile report under {APP_DATA_DIR / 'reports'}/<dataset_id>.")
 
     run_eda_report = st.button("Generate Full Profile Report", type="primary")
     if run_eda_report:
@@ -589,7 +590,7 @@ def render_modelling_step() -> None:
                 status.write(f"Task type: {task_type}")
                 status.write("Running cross-validation and model comparison")
                 artifacts = run_training(df, target_col, task_type)
-                status.write(f"Persisting artifacts to /data/artifacts/{dataset_id}")
+                status.write(f"Persisting artifacts to {APP_DATA_DIR / 'artifacts' / dataset_id}")
                 artifact_paths = persist_training_artifacts(artifacts, dataset_id)
                 status.update(label="Training complete", state="complete")
             st.session_state.artifacts = artifacts
@@ -729,7 +730,6 @@ def render_export_step() -> None:
             ]
         )
     )
-
 
 
 
